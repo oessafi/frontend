@@ -1,0 +1,121 @@
+<div class="container py-4">
+  <h2 class="mb-3">Tableau de bord Administratif</h2>
+
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'inscriptions'" (click)="setTab('inscriptions')">Inscriptions</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'soutenances'" (click)="setTab('soutenances')">Soutenances</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'campagnes'" (click)="setTab('campagnes')">Campagnes</a>
+    </li>
+  </ul>
+
+  <!-- Onglet Inscriptions -->
+  <div *ngIf="activeTab === 'inscriptions'">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Doctorant</th>
+          <th>Sujet</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let insc of inscriptionsToValidate">
+          <td>{{ insc.doctorantName }}</td>
+          <td>{{ insc.sujetThese }}</td>
+          <td><span class="badge bg-warning">En attente admin</span></td>
+          <td>
+            <button class="btn btn-success btn-sm me-2" (click)="validerDossier(insc.id, true)">Valider</button>
+            <button class="btn btn-danger btn-sm" (click)="validerDossier(insc.id, false)">Rejeter</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Onglet Soutenances (mock, à compléter selon service) -->
+  <div *ngIf="activeTab === 'soutenances'">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Doctorant</th>
+          <th>Jury</th>
+          <th>Date</th>
+          <th>Lieu</th>
+          <th>Statut</th>
+          <th>Planifier</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let sout of demandesSoutenance">
+          <td>{{ sout.doctorantId }}</td>
+          <td>{{ sout.jury?.join(', ') }}</td>
+          <td>{{ sout.dateSoutenance }}</td>
+          <td>{{ sout.lieuSoutenance }}</td>
+          <td><span class="badge bg-info">{{ sout.status }}</span></td>
+          <td>
+            <form [formGroup]="planifForm" (ngSubmit)="planifierSoutenance(sout.id)">
+              <input type="date" class="form-control mb-1" formControlName="date">
+              <input type="text" class="form-control mb-1" formControlName="lieu" placeholder="Lieu">
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="planifForm.invalid">Planifier</button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Onglet Campagnes -->
+  <div *ngIf="activeTab === 'campagnes'">
+    <table class="table table-bordered mb-3">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Date début</th>
+          <th>Date fin</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let camp of campagnes">
+          <td>{{ camp.anneeAcademique }}</td>
+          <td>{{ camp.dateDebut }}</td>
+          <td>{{ camp.dateFin }}</td>
+          <td>
+            <span class="badge" [ngClass]="camp.active ? 'bg-success' : 'bg-secondary'">{{ camp.active ? 'Active' : 'Fermée' }}</span>
+          </td>
+          <td>
+            <button class="btn btn-warning btn-sm me-2" (click)="toggleCampagne(camp.id, camp.active)">{{ camp.active ? 'Fermer' : 'Ouvrir' }}</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <form [formGroup]="campagneForm" (ngSubmit)="creerCampagne()" class="card p-3">
+      <div class="mb-3">
+        <label for="nom" class="form-label">Nom</label>
+        <input id="nom" type="text" class="form-control" formControlName="nom">
+      </div>
+      <div class="mb-3">
+        <label for="dateDebut" class="form-label">Date début</label>
+        <input id="dateDebut" type="date" class="form-control" formControlName="dateDebut">
+      </div>
+      <div class="mb-3">
+        <label for="dateFin" class="form-label">Date fin</label>
+        <input id="dateFin" type="date" class="form-control" formControlName="dateFin">
+      </div>
+      <button type="submit" class="btn btn-success" [disabled]="campagneForm.invalid">Créer campagne</button>
+    </form>
+  </div>
+</div>

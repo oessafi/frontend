@@ -1,0 +1,58 @@
+<div class="container py-4">
+  <h2 class="mb-3">Tableau de bord Doctorant</h2>
+
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+  <!-- Statut de l'inscription -->
+  <div *ngIf="latestInscription" class="mb-4">
+    <div [ngClass]="{
+      'alert alert-info': latestInscription.status === 'EN_ATTENTE_ADMIN' || latestInscription.status === 'EN_ATTENTE_DIRECTEUR',
+      'alert alert-success': latestInscription.status === 'VALIDE',
+      'alert alert-danger': latestInscription.status === 'REFUSEE'
+    }">
+      Statut actuel : <strong>{{ latestInscription.status }}</strong>
+    </div>
+    <table class="table table-bordered">
+      <tr><th>Sujet</th><td>{{ latestInscription.sujetThese }}</td></tr>
+      <tr><th>Laboratoire</th><td>{{ latestInscription.laboratoire }}</td></tr>
+      <tr><th>Directeur</th><td>{{ latestInscription.directeurId }}</td></tr>
+    </table>
+  </div>
+
+  <!-- Nouvelle inscription -->
+  <div *ngIf="!latestInscription || latestInscription.status === 'REFUSEE'">
+    <button class="btn btn-primary mb-3" (click)="onNewInscription()">Nouvelle Inscription</button>
+    <form [formGroup]="form" (ngSubmit)="submitInscription()" class="card p-3 mb-4">
+      <div class="mb-3">
+        <label for="sujet" class="form-label">Sujet de thèse</label>
+        <input id="sujet" type="text" class="form-control" formControlName="sujetThese">
+        <div *ngIf="form.get('sujetThese')?.invalid && form.get('sujetThese')?.touched" class="text-danger">Sujet requis</div>
+      </div>
+      <div class="mb-3">
+        <label for="directeur" class="form-label">Directeur de thèse</label>
+        <select id="directeur" class="form-select" formControlName="directeurId">
+          <option value="">Sélectionner...</option>
+          <option *ngFor="let d of directors" [value]="d.id">{{ d.firstName }} {{ d.lastName }}</option>
+        </select>
+        <div *ngIf="form.get('directeurId')?.invalid && form.get('directeurId')?.touched" class="text-danger">Directeur requis</div>
+      </div>
+      <button type="submit" class="btn btn-success" [disabled]="form.invalid || loading">Valider</button>
+    </form>
+  </div>
+
+  <!-- Soutenance et upload rapport -->
+  <div *ngIf="canRequestSoutenance()">
+    <button class="btn btn-warning mb-3" (click)="requestSoutenance()">Initier demande de soutenance</button>
+    <div class="card p-3 mb-4">
+      <label class="form-label">Déposer le rapport de thèse (PDF)</label>
+      <input type="file" class="form-control" (change)="onFileSelected($event)" accept="application/pdf">
+      <div *ngIf="fileError" class="text-danger mt-2">{{ fileError }}</div>
+      <div *ngIf="uploading" class="mt-2"><span class="spinner-border spinner-border-sm"></span> Envoi en cours...</div>
+    </div>
+  </div>
+</div>

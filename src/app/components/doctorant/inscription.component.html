@@ -1,0 +1,43 @@
+<section class="inscription">
+  <h2>{{ title }}</h2>
+
+  <form [formGroup]="inscriptionForm" (ngSubmit)="onSubmit()" class="inscription-form">
+    <div class="form-group">
+      <label for="sujetThese">Sujet de thèse *</label>
+      <input id="sujetThese" formControlName="sujetThese" type="text" required />
+      <div class="error" *ngIf="inscriptionForm.get('sujetThese')?.invalid && inscriptionForm.get('sujetThese')?.touched">
+        Ce champ est requis.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="laboratoire">Laboratoire *</label>
+      <input id="laboratoire" formControlName="laboratoire" type="text" required />
+      <div class="error" *ngIf="inscriptionForm.get('laboratoire')?.invalid && inscriptionForm.get('laboratoire')?.touched">
+        Ce champ est requis.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="specialite">Spécialité</label>
+      <input id="specialite" formControlName="specialite" type="text" />
+    </div>
+
+    <div class="form-group">
+      <label for="anneeAcademique">Année académique</label>
+      <input id="anneeAcademique" formControlName="anneeAcademique" type="text" />
+    </div>
+
+    <div class="form-group">
+      <label for="directeurId">Directeur de thèse (ID)</label>
+      <input id="directeurId" formControlName="directeurId" type="text" />
+    </div>
+
+    <button type="submit" [disabled]="inscriptionForm.invalid || loading">Valider</button>
+  </form>
+
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+  <div *ngIf="loading" class="loading-spinner">Envoi en cours...</div>
+</section>
