@@ -12,14 +12,8 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-
-  loginForm!: FormGroup;
+  loginForm: FormGroup;
   errorMessage = '';
-
-  // Constantes correspondant aux rôles définis dans app.routes.ts
-  private readonly ROLE_ENCADRANT = 'ROLE_ENCADRANT';
-  private readonly ROLE_ADMIN = 'ROLE_ADMINISTRATIF'; // Attention: doit matcher le route data
-  private readonly ROLE_DOCTORANT = 'ROLE_DOCTORANT';
 
   constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
     this.loginForm = this.fb.group({
@@ -39,75 +33,47 @@ export class LoginComponent {
 
     this.auth.login(credentials).subscribe({
       next: (res) => {
-        const backendUserRole = res?.user?.role;
-
-        if (backendUserRole) {
-          // 1. Normaliser le rôle (transformer "DOCTORANT" en "ROLE_DOCTORANT")
-          const normalized = this.normalizeRole(backendUserRole);
-          // 2. Rediriger
-          this.redirectByRole(normalized);
+        const role = res?.user?.role;
+        if (role) {
+          this.redirectToRoleDashboard(role);
         } else {
           this.errorMessage = 'Réponse invalide du serveur (rôle manquant).';
-          this.auth.logout();
         }
       },
       error: (err) => {
         console.error('Login failed', err);
-        const backendMessage = err?.error?.message || err?.error || null;
-        if (backendMessage) {
-          this.errorMessage = String(backendMessage);
-        } else if (err?.status) {
-          this.errorMessage = `Erreur ${err.status} - ${err.statusText || 'Connexion refusée'}`;
-        } else {
-          this.errorMessage = 'Échec de la connexion';
-        }
+        // Fix for TS2532: Use optional chaining and nullish coalescing
+        this.errorMessage = err?.error?.message ?? 'Échec de la connexion';
       }
     });
-  }
+  } // End of onLogin
 
-  /**
-   * Convertit les rôles du Backend en rôles du Frontend
-   */
-  private normalizeRole(role: string): string {
-    if (!role) return '';
-    const r = role.toUpperCase();
+  private redirectToRoleDashboard(role: string | null): void {
+    console.log('🎯 Tentative de redirection pour le rôle:', role);
+    
+    // Normalize role: Remove 'ROLE_' prefix if it exists and make uppercase
+    const normalizedRole = role ? String(role).replace('ROLE_', '').toUpperCase() : '';
+    console.log('📝 Rôle normalisé:', normalizedRole);
 
-    // Cas DOCTORANT (Le cas qui manquait)
-    if (r === 'DOCTORANT' || r === 'ROLE_DOCTORANT' || r === 'CANDIDAT' || r === 'ROLE_CANDIDAT') {
-      return this.ROLE_DOCTORANT;
-    }
+    const roleRoutes: Record<string, string> = {
+      'CANDIDAT': '/doctorant/dashboard',
+      'DOCTORANT': '/doctorant/dashboard',
+      'DIRECTEUR_THESE': '/encadrant/dashboard',
+      'ENCADRANT': '/encadrant/dashboard',
+      'PERSONNEL_ADMIN': '/admin/dashboard',
+      'ADMINISTRATIF': '/admin/dashboard'
+    };
 
-    // Cas ENCADRANT / DIRECTEUR
-    if (r === 'ENCADRANT' || r === 'DIRECTEUR_THESE' || r === 'ROLE_ENCADRANT') {
-      return this.ROLE_ENCADRANT;
-    }
+    const targetRoute = roleRoutes[normalizedRole];
 
-    // Cas ADMIN
-    if (r === 'ADMIN' || r === 'PERSONNEL_ADMIN' || r === 'ROLE_ADMIN' || r === 'ROLE_ADMINISTRATIF') {
-      return this.ROLE_ADMIN;
-    }
-
-    // Fallback
-    if (r.startsWith('ROLE_')) return r;
-    return `ROLE_${r}`;
-  }
-
-  private redirectByRole(role: string): void {
-    switch (role) {
-      case this.ROLE_ENCADRANT:
-        this.router.navigate(['/encadrant/dashboard']);
-        break;
-      case this.ROLE_ADMIN:
-        this.router.navigate(['/admin/dashboard']);
-        break;
-      case this.ROLE_DOCTORANT:
-        this.router.navigate(['/doctorant/dashboard']);
-        break;
-      default:
-        // Si le rôle n'est pas reconnu, on reste sur le login avec un message
-        console.warn('Rôle inconnu pour redirection:', role);
-        this.errorMessage = `Rôle non géré : ${role}`;
-        break;
+    if (targetRoute) {
+      this.router.navigate([targetRoute]).then(
+        (success) => console.log('Navigation réussie:', success),
+        (error) => console.error('Erreur navigation:', error)
+      );
+    } else {
+      console.error('❌ Rôle inconnu:', normalizedRole);
+      this.errorMessage = `Rôle non reconnu : ${normalizedRole}`;
     }
   }
-}
+} // End of class
